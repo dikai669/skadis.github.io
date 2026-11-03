@@ -97,7 +97,7 @@ function renderSourceNote(data) {
 async function init() {
   const loading = document.querySelector('#loading-message');
   try {
-    const response = await fetch('/catalog.json');
+    const response = await fetch('./catalog.json');
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const data = await response.json();
     for (const category of CATEGORIES) {
