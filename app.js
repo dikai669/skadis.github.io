@@ -1,8 +1,8 @@
 const CATEGORIES = [
-  { id: 'bin', label: 'Контейнеры', title: 'Короба и контейнеры' },
-  { id: 'hook', label: 'Крючки', title: 'Крючки' },
-  { id: 'holder', label: 'Держатели', title: 'Держатели' },
-  { id: 'accessory', label: 'Аксессуары', title: 'Аксессуары' }
+  { id: 'bin', code: 'A', label: 'Контейнеры', title: 'Короба и контейнеры' },
+  { id: 'hook', code: 'B', label: 'Крючки', title: 'Крючки' },
+  { id: 'holder', code: 'C', label: 'Держатели', title: 'Держатели' },
+  { id: 'accessory', code: 'D', label: 'Аксессуары', title: 'Аксессуары' }
 ];
 const money = new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 2 });
 const decimal = new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 });
@@ -27,11 +27,11 @@ function escapeHtml(value) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]);
 }
-function imageMarkup(model, categoryLabel) {
+function imageMarkup(model, category) {
   const src = trustedUrl(model.image, host => host === 'makerworld.bblmw.com' || host.endsWith('.bblmw.com'));
   return `<div class="product-image-wrap">
     <img class="product-image" src="${escapeHtml(src)}" alt="${escapeHtml(model.title)}" loading="lazy" decoding="async">
-    <span class="category-chip">${categoryLabel}</span>
+    <span class="category-chip">${category.code} · ${category.label}</span>
   </div>`;
 }
 function variantNote(model) {
@@ -46,14 +46,18 @@ function variantNote(model) {
   }
   return '';
 }
-function cardMarkup(model, categoryLabel) {
+function cardMarkup(model, category, sequence) {
   const numericPrice = priceFor(model);
   const price = numericPrice < 150 ? 'По запросу' : money.format(numericPrice);
   const link = escapeHtml(makerWorldPage(model));
+  const itemCode = `${category.code}${sequence}`;
   return `<article class="product-card">
-    ${imageMarkup(model, categoryLabel)}
+    ${imageMarkup(model, category)}
     <div class="product-body">
-      <a class="product-title" href="${link}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.title)}</a>
+      <div class="product-title-row">
+        <span class="model-code" aria-label="Код позиции ${itemCode}">${itemCode}</span>
+        <a class="product-title" href="${link}" target="_blank" rel="noopener noreferrer">${escapeHtml(model.title)}</a>
+      </div>
       ${variantNote(model)}
       <div class="metrics">
         <div class="metric"><span>Вес</span><strong>${decimal.format(model.weight_g)} г</strong></div>
@@ -74,10 +78,10 @@ function sectionMarkup(category, models) {
     .sort((a, b) => priceFor(a) - priceFor(b) || a.title.localeCompare(b.title, 'ru'));
   return `<section class="category-section" id="section-${category.id}" aria-labelledby="heading-${category.id}">
     <div class="category-section-heading">
-      <div><p class="eyebrow">${category.label.toLocaleUpperCase('ru')}</p><h3 id="heading-${category.id}">${category.title}</h3></div>
+      <div><p class="eyebrow">${category.code} · ${category.label.toLocaleUpperCase('ru')}</p><h3 id="heading-${category.id}">${category.title}</h3></div>
       <span class="section-count">${items.length} позиций · от дешёвых к дорогим</span>
     </div>
-    <div class="product-grid">${items.map(model => cardMarkup(model, category.label)).join('')}</div>
+    <div class="product-grid">${items.map((model, index) => cardMarkup(model, category, index + 1)).join('')}</div>
   </section>`;
 }
 function renderSourceNote(data) {
